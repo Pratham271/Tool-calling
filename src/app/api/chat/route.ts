@@ -221,7 +221,22 @@ export async function POST(req:Request){
                     return { error: "Failed to retrieve content" };
                   }
                 },
-              }),
+            }),
+              get_weather_data: tool({
+                description: "Get the weather data for the given coordinates.",
+                parameters: z.object({
+                  lat: z.number().describe("The latitude of the location."),
+                  lon: z.number().describe("The longitude of the location."),
+                }),
+                execute: async ({ lat, lon }: { lat: number; lon: number }) => {
+                  const apiKey = process.env.OPENWEATHER_API_KEY;
+                  const response = await fetch(
+                    `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}`,
+                  );
+                  const data = await response.json();
+                  return data;
+                },
+            }),
         }
 
     });
