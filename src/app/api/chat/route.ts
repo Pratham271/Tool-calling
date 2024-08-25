@@ -4,6 +4,7 @@ import { convertToCoreMessages, streamText, tool } from "ai";
 import { geolocation } from "@vercel/functions";
 import { z } from 'zod';
 import FirecrawlApp from '@mendable/firecrawl-js';
+import { CodeInterpreter } from "@e2b/code-interpreter";
 
 const groq = createGroq({
     baseURL: 'https://api.groq.com/openai/v1',
@@ -235,6 +236,52 @@ export async function POST(req:Request){
                   );
                   const data = await response.json();
                   return data;
+                },
+            }),
+            programming: tool({
+                description: "Write and execute Python code.",
+                parameters: z.object({
+                  code: z.string().describe("The Python code to execute."),
+                }),
+                execute: async ({ code }: { code: string }) => {
+                  const sandbox = await CodeInterpreter.create();
+                  const execution = await sandbox.notebook.execCell(code);
+                  let message = "";
+                  let images = [];
+        
+                  if (execution.results.length > 0) {
+                    for (const result of execution.results) {
+                      if (result.isMainResult) {
+                        message += `${result.text}\n`;
+                      } else {
+                        message += `${result.text}\n`;
+                      }
+                      if (result.formats().length > 0) {
+                        const formats = result.formats();
+                        for (let format of formats) {
+                          if (format === "png") {
+                            images.push({ format: "png", data: result.png });
+                          } else if (format === "jpeg") {
+                            images.push({ format: "jpeg", data: result.jpeg });
+                          } else if (format === "svg") {
+                            images.push({ format: "svg", data: result.svg });
+                          }
+                        }
+                      }
+                    }
+                  }
+        
+                  if (execution.logs.stdout.length > 0 || execution.logs.stderr.length > 0) {
+                    if (execution.logs.stdout.length > 0) {
+                      message += `${execution.logs.stdout.join("\n")}\n`;
+                    }
+                    if (execution.logs.stderr.length > 0) {
+                      message += `${execution.logs.stderr.join("\n")}\n`;
+                    }
+                  }
+        
+                  sandbox.close();
+                  return { message: message.trim(), images };
                 },
             }),
         }
