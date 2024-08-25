@@ -33,7 +33,7 @@ export async function POST(req:Request){
 
         Here are the tools available to you:
         <available_tools>
-        web_search, retrieve, get_weather_data, programming, nearby_search, find_place, text_search
+        web_search, retrieve, programming
         </available_tools>
 
         Here is the general guideline per tool to follow when responding to user queries:
@@ -42,17 +42,9 @@ export async function POST(req:Request){
 
         - If you need to retrieve specific information from a webpage, use the retrieve tool. Analyze the user's query to set the topic type either normal or news. Then, compose your response based on the retrieved information.
 
-        - For weather-related queries, use the get_weather_data tool. The weather results are 5 days weather forecast data with 3-hour step. Then, provide the weather information in your response.
-
         - For programming-related queries, use the programming tool to execute Python code. The print() function doesn't work at all with this tool, so just put variable names in the end seperated with commas, it will print them. Then, compose your response based on the output of the code execution.
 
         - The programming tool runs the code in a jupyper notebook environment. Use this tool for tasks that require code execution, such as data analysis, calculations, or visualizations.
-
-        - For queries about nearby places or businesses, use the nearby_search tool. Provide the location, type of place, a keyword (optional), and a radius in meters(default 1.5 Kilometers). Then, compose your response based on the search results.
-
-        - For queries about finding a specific place, use the find_place tool. Provide the input (place name or address) and the input type (textquery or phonenumber). Then, compose your response based on the search results.
-
-        - For text-based searches of places, use the text_search tool. Provide the query, location (optional), and radius (optional). Then, compose your response based on the search results.
 
         - Do not use the retrieve tool for general web searches. It is only for retrieving specific information from a URL.
 
@@ -61,8 +53,6 @@ export async function POST(req:Request){
         - If asked for multiple plots, make it happen in one run of the tool. The tool will automatically capture the plots and display them in the response.
 
         - the web search may return an incorrect latex format, please correct it before using it in the response. Check the Latex in Markdown rules for more        information.
-
-        - The location search tools return images in the response, please do not include them in the response at all costs.
 
         - Never write a base64 image in the response at all costs. 
 
@@ -284,92 +274,92 @@ export async function POST(req:Request){
                   return { message: message.trim(), images };
                 },
             }),
-            nearby_search: tool({
-                description: "Search for nearby places using Google Maps API.",
-                parameters: z.object({
-                  location: z.string().describe("The location to search near (e.g., 'New York City' or '1600 Amphitheatre Parkway, Mountain View, CA')."),
-                  type: z.string().describe("The type of place to search for (e.g., restaurant, cafe, park)."),
-                  keyword: z.string().optional().describe("An optional keyword to refine the search."),
-                  radius: z.number().default(3000).describe("The radius of the search area in meters (max 50000, default 3000)."),
-                }),
-                execute: async ({ location, type, keyword, radius }: { location: string; type: string; keyword?: string; radius: number }) => {
-                  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+            // nearby_search: tool({
+            //     description: "Search for nearby places using Google Maps API.",
+            //     parameters: z.object({
+            //       location: z.string().describe("The location to search near (e.g., 'New York City' or '1600 Amphitheatre Parkway, Mountain View, CA')."),
+            //       type: z.string().describe("The type of place to search for (e.g., restaurant, cafe, park)."),
+            //       keyword: z.string().optional().describe("An optional keyword to refine the search."),
+            //       radius: z.number().default(3000).describe("The radius of the search area in meters (max 50000, default 3000)."),
+            //     }),
+            //     execute: async ({ location, type, keyword, radius }: { location: string; type: string; keyword?: string; radius: number }) => {
+            //       const apiKey = process.env.GOOGLE_MAPS_API_KEY;
         
-                  // First, use the Geocoding API to get the coordinates
-                  const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${apiKey}`;
-                  const geocodeResponse = await fetch(geocodeUrl);
-                  const geocodeData = await geocodeResponse.json();
+            //       // First, use the Geocoding API to get the coordinates
+            //       const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${apiKey}`;
+            //       const geocodeResponse = await fetch(geocodeUrl);
+            //       const geocodeData = await geocodeResponse.json();
         
-                  if (geocodeData.status !== "OK" || !geocodeData.results[0]) {
-                    throw new Error("Failed to geocode the location");
-                  }
+            //       if (geocodeData.status !== "OK" || !geocodeData.results[0]) {
+            //         throw new Error("Failed to geocode the location");
+            //       }
         
-                  const { lat, lng } = geocodeData.results[0].geometry.location;
+            //       const { lat, lng } = geocodeData.results[0].geometry.location;
         
-                  // perform the nearby search
-                  let searchUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=${type}&key=${apiKey}`;
+            //       // perform the nearby search
+            //       let searchUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=${type}&key=${apiKey}`;
         
-                  if (keyword) {
-                    searchUrl += `&keyword=${encodeURIComponent(keyword)}`;
-                  }
+            //       if (keyword) {
+            //         searchUrl += `&keyword=${encodeURIComponent(keyword)}`;
+            //       }
         
-                  const searchResponse = await fetch(searchUrl);
-                  const searchData = await searchResponse.json();
+            //       const searchResponse = await fetch(searchUrl);
+            //       const searchData = await searchResponse.json();
         
-                  return {
-                    results: searchData.results.slice(0, 5).map((place: any) => ({
-                      name: place.name,
-                      vicinity: place.vicinity,
-                      rating: place.rating,
-                      user_ratings_total: place.user_ratings_total,
-                      place_id: place.place_id,
-                      location: place.geometry.location,
-                    })),
-                    center: { lat, lng },
-                    formatted_address: geocodeData.results[0].formatted_address,
-                  };
-                },
-              }),
-              find_place: tool({
-                description: "Find a specific place using Google Maps API.",
-                parameters: z.object({
-                  input: z.string().describe("The place to search for (e.g., 'Museum of Contemporary Art Australia')."),
-                  inputtype: z.enum(["textquery", "phonenumber"]).describe("The type of input (textquery or phonenumber)."),
-                }),
-                execute: async ({ input, inputtype }: { input: string; inputtype: "textquery" | "phonenumber" }) => {
-                  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-                  const url = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?fields=formatted_address,name,rating,opening_hours,geometry&input=${encodeURIComponent(input)}&inputtype=${inputtype}&key=${apiKey}`;
+            //       return {
+            //         results: searchData.results.slice(0, 5).map((place: any) => ({
+            //           name: place.name,
+            //           vicinity: place.vicinity,
+            //           rating: place.rating,
+            //           user_ratings_total: place.user_ratings_total,
+            //           place_id: place.place_id,
+            //           location: place.geometry.location,
+            //         })),
+            //         center: { lat, lng },
+            //         formatted_address: geocodeData.results[0].formatted_address,
+            //       };
+            //     },
+            //   }),
+            //   find_place: tool({
+            //     description: "Find a specific place using Google Maps API.",
+            //     parameters: z.object({
+            //       input: z.string().describe("The place to search for (e.g., 'Museum of Contemporary Art Australia')."),
+            //       inputtype: z.enum(["textquery", "phonenumber"]).describe("The type of input (textquery or phonenumber)."),
+            //     }),
+            //     execute: async ({ input, inputtype }: { input: string; inputtype: "textquery" | "phonenumber" }) => {
+            //       const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+            //       const url = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?fields=formatted_address,name,rating,opening_hours,geometry&input=${encodeURIComponent(input)}&inputtype=${inputtype}&key=${apiKey}`;
         
-                  const response = await fetch(url);
-                  const data = await response.json();
+            //       const response = await fetch(url);
+            //       const data = await response.json();
         
-                  return data;
-                },
-              }),
-              text_search: tool({
-                description: "Perform a text-based search for places using Google Maps API.",
-                parameters: z.object({
-                  query: z.string().describe("The search query (e.g., '123 main street')."),
-                  location: z.string().optional().describe("The location to center the search (e.g., '42.3675294,-71.186966')."),
-                  radius: z.number().optional().describe("The radius of the search area in meters (max 50000)."),
-                }),
-                execute: async ({ query, location, radius }: { query: string; location?: string; radius?: number }) => {
-                  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-                  let url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${apiKey}`;
+            //       return data;
+            //     },
+            //   }),
+            //   text_search: tool({
+            //     description: "Perform a text-based search for places using Google Maps API.",
+            //     parameters: z.object({
+            //       query: z.string().describe("The search query (e.g., '123 main street')."),
+            //       location: z.string().optional().describe("The location to center the search (e.g., '42.3675294,-71.186966')."),
+            //       radius: z.number().optional().describe("The radius of the search area in meters (max 50000)."),
+            //     }),
+            //     execute: async ({ query, location, radius }: { query: string; location?: string; radius?: number }) => {
+            //       const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+            //       let url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${apiKey}`;
         
-                  if (location) {
-                    url += `&location=${encodeURIComponent(location)}`;
-                  }
-                  if (radius) {
-                    url += `&radius=${radius}`;
-                  }
+            //       if (location) {
+            //         url += `&location=${encodeURIComponent(location)}`;
+            //       }
+            //       if (radius) {
+            //         url += `&radius=${radius}`;
+            //       }
         
-                  const response = await fetch(url);
-                  const data = await response.json();
+            //       const response = await fetch(url);
+            //       const data = await response.json();
         
-                  return data;
-                },
-              }),
+            //       return data;
+            //     },
+            //   }),
         },
         toolChoice: "auto",
     });
