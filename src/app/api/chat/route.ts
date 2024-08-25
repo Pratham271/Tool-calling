@@ -17,7 +17,7 @@ export async function POST(req:Request){
 
     const { messages } = await req.json();
     const { latitude, longitude, city } = geolocation(req)
-    const result = await generateText({
+    const result = await streamText({
         model: groq('llama-3.1-405b-reasoning'),
         messages: convertToCoreMessages(messages),
         temperature: 0,
@@ -223,21 +223,21 @@ export async function POST(req:Request){
                   }
                 },
             }),
-              get_weather_data: tool({
-                description: "Get the weather data for the given coordinates.",
-                parameters: z.object({
-                  lat: z.number().describe("The latitude of the location."),
-                  lon: z.number().describe("The longitude of the location."),
-                }),
-                execute: async ({ lat, lon }: { lat: number; lon: number }) => {
-                  const apiKey = process.env.OPENWEATHER_API_KEY;
-                  const response = await fetch(
-                    `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}`,
-                  );
-                  const data = await response.json();
-                  return data;
-                },
-            }),
+            //   get_weather_data: tool({
+            //     description: "Get the weather data for the given coordinates.",
+            //     parameters: z.object({
+            //       lat: z.number().describe("The latitude of the location."),
+            //       lon: z.number().describe("The longitude of the location."),
+            //     }),
+            //     execute: async ({ lat, lon }: { lat: number; lon: number }) => {
+            //       const apiKey = process.env.OPENWEATHER_API_KEY;
+            //       const response = await fetch(
+            //         `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}`,
+            //       );
+            //       const data = await response.json();
+            //       return data;
+            //     },
+            // }),
             programming: tool({
                 description: "Write and execute Python code.",
                 parameters: z.object({
@@ -370,7 +370,8 @@ export async function POST(req:Request){
                   return data;
                 },
               }),
-        }
-
+        },
+        toolChoice: "auto",
     });
+    return result.toDataStreamResponse();
 }
