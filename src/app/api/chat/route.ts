@@ -284,6 +284,92 @@ export async function POST(req:Request){
                   return { message: message.trim(), images };
                 },
             }),
+            nearby_search: tool({
+                description: "Search for nearby places using Google Maps API.",
+                parameters: z.object({
+                  location: z.string().describe("The location to search near (e.g., 'New York City' or '1600 Amphitheatre Parkway, Mountain View, CA')."),
+                  type: z.string().describe("The type of place to search for (e.g., restaurant, cafe, park)."),
+                  keyword: z.string().optional().describe("An optional keyword to refine the search."),
+                  radius: z.number().default(3000).describe("The radius of the search area in meters (max 50000, default 3000)."),
+                }),
+                execute: async ({ location, type, keyword, radius }: { location: string; type: string; keyword?: string; radius: number }) => {
+                  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+        
+                  // First, use the Geocoding API to get the coordinates
+                  const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${apiKey}`;
+                  const geocodeResponse = await fetch(geocodeUrl);
+                  const geocodeData = await geocodeResponse.json();
+        
+                  if (geocodeData.status !== "OK" || !geocodeData.results[0]) {
+                    throw new Error("Failed to geocode the location");
+                  }
+        
+                  const { lat, lng } = geocodeData.results[0].geometry.location;
+        
+                  // perform the nearby search
+                  let searchUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=${type}&key=${apiKey}`;
+        
+                  if (keyword) {
+                    searchUrl += `&keyword=${encodeURIComponent(keyword)}`;
+                  }
+        
+                  const searchResponse = await fetch(searchUrl);
+                  const searchData = await searchResponse.json();
+        
+                  return {
+                    results: searchData.results.slice(0, 5).map((place: any) => ({
+                      name: place.name,
+                      vicinity: place.vicinity,
+                      rating: place.rating,
+                      user_ratings_total: place.user_ratings_total,
+                      place_id: place.place_id,
+                      location: place.geometry.location,
+                    })),
+                    center: { lat, lng },
+                    formatted_address: geocodeData.results[0].formatted_address,
+                  };
+                },
+              }),
+              find_place: tool({
+                description: "Find a specific place using Google Maps API.",
+                parameters: z.object({
+                  input: z.string().describe("The place to search for (e.g., 'Museum of Contemporary Art Australia')."),
+                  inputtype: z.enum(["textquery", "phonenumber"]).describe("The type of input (textquery or phonenumber)."),
+                }),
+                execute: async ({ input, inputtype }: { input: string; inputtype: "textquery" | "phonenumber" }) => {
+                  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+                  const url = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?fields=formatted_address,name,rating,opening_hours,geometry&input=${encodeURIComponent(input)}&inputtype=${inputtype}&key=${apiKey}`;
+        
+                  const response = await fetch(url);
+                  const data = await response.json();
+        
+                  return data;
+                },
+              }),
+              text_search: tool({
+                description: "Perform a text-based search for places using Google Maps API.",
+                parameters: z.object({
+                  query: z.string().describe("The search query (e.g., '123 main street')."),
+                  location: z.string().optional().describe("The location to center the search (e.g., '42.3675294,-71.186966')."),
+                  radius: z.number().optional().describe("The radius of the search area in meters (max 50000)."),
+                }),
+                execute: async ({ query, location, radius }: { query: string; location?: string; radius?: number }) => {
+                  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+                  let url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${apiKey}`;
+        
+                  if (location) {
+                    url += `&location=${encodeURIComponent(location)}`;
+                  }
+                  if (radius) {
+                    url += `&radius=${radius}`;
+                  }
+        
+                  const response = await fetch(url);
+                  const data = await response.json();
+        
+                  return data;
+                },
+              }),
         }
 
     });
