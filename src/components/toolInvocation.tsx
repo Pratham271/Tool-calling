@@ -27,6 +27,8 @@ import { motion } from 'framer-motion';
 const renderToolInvocation = (toolInvocation: ToolInvocation, index: number) => {
     const args = JSON.parse(JSON.stringify(toolInvocation.args));
     const result = 'result' in toolInvocation ? JSON.parse(JSON.stringify(toolInvocation.result)) : null;
+    // console.log("arguments: ",args)
+    // console.log("result: ",result)
 
     if (toolInvocation.toolName === 'programming') {
       return (
@@ -148,6 +150,7 @@ const renderToolInvocation = (toolInvocation: ToolInvocation, index: number) => 
                 <Globe className="h-5 w-5 text-neutral-700 animate-spin" />
                 <span className="text-neutral-700 text-lg">Running a search...</span>
               </div>
+              {/* loading animation for ... */}
               <div className="flex space-x-1">
                 {[0, 1, 2].map((index) => (
                   <motion.div
