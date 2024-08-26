@@ -24,13 +24,13 @@ const Navbar = () => (
         <Button
           variant="secondary"
           size="sm"
-          onClick={() => window.open("https://git.new/mplx", "_blank")}
+          onClick={() => window.open("https://github.com/Pratham271/Tool-calling", "_blank")}
           className="flex items-center space-x-2"
         >
           <GitHubLogoIcon className="h-4 w-4 text-primary" />
           <span>GitHub</span>
         </Button>
-        <TooltipProvider>
+        {/* <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -46,7 +46,7 @@ const Navbar = () => (
               <p>Sponsor this project on GitHub</p>
             </TooltipContent>
           </Tooltip>
-        </TooltipProvider>
+        </TooltipProvider> */}
       </div>
     </div>
 );

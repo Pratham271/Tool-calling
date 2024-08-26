@@ -51,3 +51,4 @@ interface MarkdownRendererProps {
   });
   
   MarkdownRenderer.displayName = "MarkdownRenderer";
+export default MarkdownRenderer
