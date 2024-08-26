@@ -132,7 +132,8 @@ export default function Home() {
             <h1 className="text-4xl sm:text-6xl mb-1 text-gray-800 font-serif">Perplex Jr.</h1>
           </div>
           <h2 className='text-xl sm:text-2xl font-serif text-balance text-center mb-6 text-gray-600'>
-            In search for minimalism and simplicity
+            {/* In search for minimalism and simplicity */}
+            Where simplicity meets intelligent search.
           </h2>
         </div>
       )}
