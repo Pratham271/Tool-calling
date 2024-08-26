@@ -1,3 +1,4 @@
+'use client';
 import { ToolInvocation } from "ai";
 import {
     SearchIcon,
@@ -224,6 +225,16 @@ const renderToolInvocation = (toolInvocation: ToolInvocation, index: number) => 
               </AccordionItem>
             </Accordion>
           )}
+          <div className="flex items-center justify-between w-full">
+          {result && result.results.slice(0, 4).map((item: any, itemIndex: number) => (
+            <img
+              key={itemIndex}
+              src={item.images}
+              alt=""
+              className="object-cover h-36 w-36 rounded-md"
+            />
+          ))}
+          </div>
         </div>
       );
     }

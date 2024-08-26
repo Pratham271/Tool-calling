@@ -62,7 +62,7 @@ export default function Home() {
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, suggestedQuestions]);
+  }, [messages]);
 
   const handleExampleClick = useCallback(async (query: string) => {
     setLastSubmittedQuery(query.trim());
