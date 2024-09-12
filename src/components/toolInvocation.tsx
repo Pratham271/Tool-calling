@@ -23,6 +23,7 @@ import { Button } from "./ui/button";
 import { Badge } from '@/components/ui/badge';
 import Image from "next/image";
 import { motion } from 'framer-motion';
+import WebSearchResults from "./webSearchResults";
 
 const renderToolInvocation = (toolInvocation: ToolInvocation, index: number) => {
     const args = JSON.parse(JSON.stringify(toolInvocation.args));
@@ -169,62 +170,63 @@ const renderToolInvocation = (toolInvocation: ToolInvocation, index: number) => 
               </div>
             </div>
           ) : (
-            <Accordion type="single" collapsible className="w-full mt-4">
-              <AccordionItem value={`item-${index}`} className='border-none'>
-                <AccordionTrigger className="hover:no-underline py-2">
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-2">
-                      <Newspaper className="h-5 w-5 text-primary" />
-                      <h2 className='text-base font-semibold'>Sources Found</h2>
-                    </div>
-                    {result && (
-                      <Badge variant="secondary" className='rounded-full'>{result.results.length} results</Badge>
-                    )}
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  {args?.query && (
-                    <Badge variant="secondary" className="mb-4 text-xs sm:text-sm font-light rounded-full">
-                      <SearchIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                      {args.query}
-                    </Badge>
-                  )}
-                  {result && (
-                    <div className="flex flex-col sm:flex-row gap-4 overflow-x-auto pb-2">
-                      {result.results.map((item: any, itemIndex: number) => (
-                        <div key={itemIndex} className="flex flex-col w-full sm:w-[280px] flex-shrink-0 bg-card border rounded-lg p-3">
-                          <div className="flex items-start gap-3 mb-2">
-                            <Image
-                              width={48}
-                              height={48}
-                              unoptimized
-                              quality={100}
-                              src={`https://www.google.com/s2/favicons?sz=128&domain=${new URL(item.url).hostname}`}
-                              alt="Favicon"
-                              className="w-8 h-8 sm:w-12 sm:h-12 flex-shrink-0 rounded-sm"
-                            />
-                            <div className="flex-grow min-w-0">
-                              <h3 className="text-sm font-semibold line-clamp-2">{item.title}</h3>
-                              <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{item.content}</p>
-                            </div>
-                          </div>
-                          <a
-                            href={item.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-primary truncate hover:underline"
-                          >
-                            {item.url}
-                          </a>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+            <WebSearchResults result={result} args={args} />
+            // <Accordion type="single" collapsible className="w-full mt-4">
+            //   <AccordionItem value={`item-${index}`} className='border-none'>
+            //     <AccordionTrigger className="hover:no-underline py-2">
+            //       <div className="flex items-center justify-between w-full">
+            //         <div className="flex items-center gap-2">
+            //           <Newspaper className="h-5 w-5 text-primary" />
+            //           <h2 className='text-base font-semibold'>Sources Found</h2>
+            //         </div>
+            //         {result && (
+            //           <Badge variant="secondary" className='rounded-full'>{result.results.length} results</Badge>
+            //         )}
+            //       </div>
+            //     </AccordionTrigger>
+            //     <AccordionContent>
+            //       {args?.query && (
+            //         <Badge variant="secondary" className="mb-4 text-xs sm:text-sm font-light rounded-full">
+            //           <SearchIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+            //           {args.query}
+            //         </Badge>
+            //       )}
+            //       {result && (
+            //         <div className="flex flex-col sm:flex-row gap-4 overflow-x-auto pb-2">
+            //           {result.results.map((item: any, itemIndex: number) => (
+            //             <div key={itemIndex} className="flex flex-col w-full sm:w-[280px] flex-shrink-0 bg-card border rounded-lg p-3">
+            //               <div className="flex items-start gap-3 mb-2">
+            //                 <Image
+            //                   width={48}
+            //                   height={48}
+            //                   unoptimized
+            //                   quality={100}
+            //                   src={`https://www.google.com/s2/favicons?sz=128&domain=${new URL(item.url).hostname}`}
+            //                   alt="Favicon"
+            //                   className="w-8 h-8 sm:w-12 sm:h-12 flex-shrink-0 rounded-sm"
+            //                 />
+            //                 <div className="flex-grow min-w-0">
+            //                   <h3 className="text-sm font-semibold line-clamp-2">{item.title}</h3>
+            //                   <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{item.content}</p>
+            //                 </div>
+            //               </div>
+            //               <a
+            //                 href={item.url}
+            //                 target="_blank"
+            //                 rel="noopener noreferrer"
+            //                 className="text-xs text-primary truncate hover:underline"
+            //               >
+            //                 {item.url}
+            //               </a>
+            //             </div>
+            //           ))}
+            //         </div>
+            //       )}
+            //     </AccordionContent>
+            //   </AccordionItem>
+            // </Accordion>
           )}
-          <div className="flex items-center justify-between w-full gap-x-2 sm:gap-x-0">
+          {/* <div className="flex items-center justify-between w-full gap-x-2 sm:gap-x-0">
           {result && result.results.slice(0, 4).map((item: any, itemIndex: number) => (
             <img
               key={itemIndex}
@@ -233,7 +235,7 @@ const renderToolInvocation = (toolInvocation: ToolInvocation, index: number) => 
               className="object-cover h-20 w-20 sm:h-40 sm:w-40 rounded-md"
             />
           ))}
-          </div>
+          </div> */}
         </div>
       );
     }

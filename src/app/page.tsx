@@ -43,7 +43,7 @@ export default function Home() {
         description: "We must have ran out of credits. Sponsor us on GitHub to keep this service running.",
         action: {
           label: "Sponsor",
-          onClick: () => window.open("https://git.new/mplx", "_blank"),
+          onClick: () => window.open("https://github.com/Pratham271", "_blank"),
         },
       });
     },

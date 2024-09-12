@@ -7,6 +7,16 @@ import { geolocation } from "@vercel/functions";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 60;
+function sanitizeUrl(url: string): string {
+  return url.replace(/\s+/g, '%20')
+}
+type SearchResultImage =
+  | string
+  | {
+    url: string
+    description: string
+    number_of_results?: number
+  }
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
@@ -112,7 +122,8 @@ export async function POST(req: Request) {
           exclude_domains?: string[];
         }) => {
           const apiKey = process.env.TAVILY_API_KEY;
-
+          const includeImageDescriptions = true
+          console.log("inside search tool", apiKey)
           let body = JSON.stringify({
             api_key: apiKey,
             query,
@@ -121,6 +132,7 @@ export async function POST(req: Request) {
             search_depth: searchDepth,
             include_answers: true,
             include_images: true,
+            include_image_descriptions: includeImageDescriptions,
             exclude_domains: exclude_domains,
           });
 
@@ -134,6 +146,7 @@ export async function POST(req: Request) {
               search_depth: searchDepth,
               include_answers: true,
               include_images: true,
+              include_image_descriptions: includeImageDescriptions,
               exclude_domains: exclude_domains,
             });
           }
@@ -147,7 +160,7 @@ export async function POST(req: Request) {
           });
 
           const data = await response.json();
-
+          // console.log(data)
           let context = data.results.map(
             (obj: { url: any; content: any; title: any; raw_content: any, published_date: any }, index:number) => {
               if (topic === "news") {
@@ -157,7 +170,6 @@ export async function POST(req: Request) {
                   content: obj.content,
                   raw_content: obj.raw_content,
                   published_date: obj.published_date,
-                  images: data.images[index] || [],
                 };
               }
               return {
@@ -165,13 +177,29 @@ export async function POST(req: Request) {
                 title: obj.title,
                 content: obj.content,
                 raw_content: obj.raw_content,
-                images: data.images[index] || [],
               };
             },
           );
-          console.log("images: ",context)
+          console.log("images in backend: ",context)
+          const processedImages = includeImageDescriptions
+            ? data.images
+              .map(({ url, description }: { url: string; description: string }) => ({
+                url: sanitizeUrl(url),
+                description
+              }))
+              .filter(
+                (
+                  image: SearchResultImage
+                ): image is { url: string; description: string } =>
+                  typeof image === 'object' &&
+                  image.description !== undefined &&
+                  image.description !== ''
+              )
+            : data.images.map((url: string) => sanitizeUrl(url))
+          // console.log("")
           return {
             results: context,
+            images: processedImages,
           };
         },
       }),
